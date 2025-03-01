@@ -10,6 +10,8 @@ import javax.persistence.*;
 import javax.validation.constraints.Email;
 import javax.validation.constraints.Size;
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "USERS", uniqueConstraints = {
@@ -28,6 +30,9 @@ public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(nullable = false, unique = true)
+    private String username;
 
     @NonNull
     @Size(max = 50)
@@ -59,4 +64,11 @@ public class User {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+        name = "subscriptions",
+        joinColumns = @JoinColumn(name = "user_id"),
+        inverseJoinColumns = @JoinColumn(name = "theme_id")
+    )
+    private Set<Theme> subscriptions = new HashSet<>();
 }
