@@ -1,0 +1,42 @@
+<div class="flex flex-col gap-4 px-8 pt-10 pb-4">
+  <button routerLink="/" class="w-fit">
+    <svg width="41" height="24" viewBox="0 0 41 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M0.939339 10.9393C0.353554 11.5251 0.353554 12.4749 0.939339 13.0607L10.4853 22.6066C11.0711 23.1924 12.0208 23.1924 12.6066 22.6066C13.1924 22.0208 13.1924 21.0711 12.6066 20.4853L4.12132 12L12.6066 3.51472C13.1924 2.92893 13.1924 1.97919 12.6066 1.3934C12.0208 0.807611 11.0711 0.807611 10.4853 1.3934L0.939339 10.9393ZM41 10.5L2 10.5V13.5L41 13.5V10.5Z" fill="black"/>
+    </svg>
+  </button>
+
+  <div class="flex flex-col justify-center items-center">
+    <img src="/assets/logo_p6.png" alt="logo" class="w-56 h-32 object-contain" />
+    <h2 class="text-xl">Se connecter</h2>
+  </div>
+
+  <form class="flex flex-col gap-6 w-full max-w-md mx-auto" [formGroup]="form" (ngSubmit)="submit()">
+    <div class="flex flex-col gap-4">
+      <div class="flex flex-col">
+        <label class="text-sm mb-1">E-mail ou nom d'utilisateur</label>
+        <input class="border border-black rounded-lg px-3 py-2"
+               placeholder="E-mail ou nom d'utilisateur"
+               formControlName="email">
+      </div>
+
+      <div class="flex flex-col">
+        <label class="text-sm mb-1">Mot de passe</label>
+        <input class="border border-black rounded-lg px-3 py-2"
+               [type]="hide ? 'password' : 'text'"
+               placeholder="Mot de passe"
+               formControlName="password">
+      </div>
+    </div>
+
+    <div class="flex justify-center">
+      <button type="submit"
+              [disabled]="form.invalid"
+              class="bg-[#7763C5] w-fit text-white rounded-lg py-2 px-4 mt-4 disabled:opacity-50">
+        Se connecter
+      </button>
+    </div>
+
+    <p *ngIf="onError" class="text-red-500 text-center">Une erreur est survenue</p>
+  </form>
+</div>
+

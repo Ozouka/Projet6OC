@@ -1,0 +1,37 @@
+<div class="min-h-screen bg-gray-50 p-8 flex flex-col lg:flex-row gap-4">
+  <a routerLink="/articles" class="text-2xl font-semibold cursor-pointer">← </a>
+  <div class="lg:max-w-2xl lg:mx-auto">
+    <div class="flex items-center mb-8">
+      <h1 class="text-2xl font-semibold">Créer un nouvel article</h1>
+    </div>
+
+    <form (ngSubmit)="onSubmit()" class="space-y-4">
+      <div>
+        <select class="w-full p-3 border rounded-lg bg-white" formControlName="theme">
+          <option value="" disabled selected>Sélectionner un thème</option>
+          <option value="1">Thème 1</option>
+          <option value="2">Thème 2</option>
+          <option value="3">Thème 3</option>
+        </select>
+      </div>
+
+      <div>
+        <input type="text"
+               class="w-full p-3 border rounded-lg"
+               placeholder="Titre de l'article"
+               formControlName="title">
+      </div>
+
+      <div>
+        <textarea class="w-full p-3 border rounded-lg h-48"
+                  placeholder="Contenu de l'article"
+                  formControlName="content"></textarea>
+      </div>
+
+      <button type="submit"
+              class="w-full bg-[#7763C5] text-white px-4 py-2 rounded-lg">
+        Créer
+      </button>
+    </form>
+  </div>
+</div>

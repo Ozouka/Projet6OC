@@ -1,0 +1,16 @@
+<div class="min-h-screen bg-gray-50 p-8">
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div *ngFor="let theme of themes" class="bg-gray-100 p-4 rounded-lg">
+      <h3 class="font-bold text-lg mb-2">{{theme.title}}</h3>
+      <p class="text-sm">{{theme.content}}</p>
+      <div class="w-full flex items-center justify-center">
+        <button
+          (click)="toggleSubscription(theme)"
+          [ngClass]="{'bg-[#7763C5]': !theme.isSubscribed, 'bg-[#939393]': theme.isSubscribed}"
+          class="text-white px-10 py-2 rounded-lg">
+          {{ theme.isSubscribed ? 'Déjà abonné' : 'S\'abonner' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,56 @@
+<div class="min-h-screen bg-gray-50 p-8">
+    <!-- Section Profil -->
+    <div class="bg-white rounded-lg p-6 mb-8 shadow-sm max-w-2xl mx-auto">
+      <h2 class="text-2xl font-bold mb-6">Profil utilisateur</h2>
+      <form [formGroup]="profileForm" (ngSubmit)="onSubmit()" class="space-y-4">
+        <div>
+          <input type="text"
+                 formControlName="username"
+                 placeholder="Username"
+                 class="w-full p-3 border rounded-lg bg-gray-50">
+        </div>
+
+        <div>
+          <input type="email"
+                 formControlName="email"
+                 placeholder="email@email.fr"
+                 class="w-full p-3 border rounded-lg bg-gray-50">
+        </div>
+
+        <div>
+          <input type="password"
+                 formControlName="password"
+                 placeholder="Mot de passe"
+                 class="w-full p-3 border rounded-lg bg-gray-50">
+        </div>
+
+        <button type="submit"
+                class="w-full bg-[#7763C5] text-white px-4 py-2 rounded-lg">
+          Sauvegarder
+        </button>
+      </form>
+    </div>
+
+    <!-- Section Abonnements -->
+    <div class="w-full border-t-2 border-solid border-black">
+      <h2 class="text-2xl font-bold mb-6 text-center">Abonnements</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div *ngFor="let theme of subscribedThemes" class="bg-gray-100 p-4 rounded-lg">
+          <h3 class="font-bold text-lg mb-2">{{theme.title}}</h3>
+          <div class="flex justify-between text-sm text-gray-600 mb-2">
+            <span>{{theme.date}}</span>
+            <span>{{theme.author}}</span>
+          </div>
+          <p class="text-sm mb-4">{{theme.content}}</p>
+          <div class="w-full flex items-center justify-center">
+            <button
+              (click)="toggleSubscription(theme)"
+              [ngClass]="{'bg-[#7763C5]': !theme.isSubscribed, 'bg-[#939393]': theme.isSubscribed}"
+              class="text-white px-10 py-2 rounded-lg">
+              {{ theme.isSubscribed ? 'Déjà abonné' : 'S\'abonner' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+</div>
