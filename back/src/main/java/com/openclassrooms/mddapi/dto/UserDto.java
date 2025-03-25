@@ -16,6 +16,8 @@ import java.time.LocalDateTime;
 public class UserDto {
     private Long id;
 
+    private String username;
+
     @NonNull
     @Size(max = 50)
     @Email

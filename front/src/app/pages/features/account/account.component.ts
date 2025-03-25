@@ -23,6 +23,9 @@ export class AccountComponent implements OnInit {
   isLoading = false;
   hasError = false;
   errorMessage = '';
+  updateSuccess = false;
+  updateError = false;
+  updateErrorMessage = '';
 
   constructor(
     private fb: FormBuilder,
@@ -47,8 +50,28 @@ export class AccountComponent implements OnInit {
       return;
     }
 
-    // Ici, vous pourriez ajouter un appel à l'API pour récupérer les informations du profil
-    // et les utiliser pour remplir le formulaire
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${token}`
+    });
+
+    // Appel à l'endpoint /me pour récupérer les informations de l'utilisateur
+    this.http.get<any>('http://localhost:8080/auth/me', { headers }).subscribe({
+      next: (userData) => {
+        console.log('Données utilisateur reçues:', userData);
+
+        // Mise à jour du formulaire avec les données utilisateur
+        this.profileForm.patchValue({
+          username: userData.username,
+          email: userData.email,
+          password: '' // On ne récupère jamais le mot de passe
+        });
+      },
+      error: (error) => {
+        console.error('Erreur lors du chargement du profil:', error);
+        this.updateError = true;
+        this.updateErrorMessage = 'Impossible de charger les informations du profil.';
+      }
+    });
   }
 
   loadThemes() {
@@ -112,8 +135,47 @@ export class AccountComponent implements OnInit {
 
   onSubmit() {
     if (this.profileForm.valid) {
-      console.log(this.profileForm.value);
-      // Implémentez ici la logique de sauvegarde du profil
+      this.updateSuccess = false;
+      this.updateError = false;
+
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.error('Utilisateur non authentifié');
+        return;
+      }
+
+      const headers = new HttpHeaders({
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      });
+
+      // Définir le type pour éviter l'erreur TypeScript
+      const updateUser: any = {
+        username: this.profileForm.value.username,
+        email: this.profileForm.value.email
+      };
+
+      // Ajouter le mot de passe uniquement s'il a été saisi
+      if (this.profileForm.value.password && this.profileForm.value.password.trim() !== '') {
+        updateUser.password = this.profileForm.value.password;
+      }
+
+      // Appel à l'API pour mettre à jour le profil
+      this.http.put('http://localhost:8080/auth/me', updateUser, { headers }).subscribe({
+        next: (response) => {
+          this.updateSuccess = true;
+          console.log('Profil mis à jour avec succès');
+
+          // Réinitialiser le champ mot de passe
+          this.profileForm.patchValue({ password: '' });
+        },
+        error: (error) => {
+          this.updateError = true;
+          this.updateErrorMessage = error.error && error.error.message ?
+            error.error.message : 'Une erreur est survenue lors de la mise à jour du profil';
+          console.error('Erreur lors de la mise à jour du profil:', error);
+        }
+      });
     }
   }
 
