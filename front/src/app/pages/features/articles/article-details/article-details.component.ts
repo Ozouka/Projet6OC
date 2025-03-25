@@ -1,26 +1,28 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-
-interface Badge {
-  color: string;
-  initial: string;
-}
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { finalize } from 'rxjs/operators';
 
 interface Comment {
-  username: string;
+  id: number;
   content: string;
-  badges: Badge[];
+  authorEmail: string;
+  createdAt: string;
 }
 
-interface Article {
+interface Post {
   id: number;
   title: string;
-  date: string;
-  author: string;
   content: string;
+  authorEmail: string;
+  authorUsername: string;
+  themeId: number;
+  themeName: string;
+  themeDescription: string | null;
+  createdAt: string;
   comments: Comment[];
 }
 
@@ -31,79 +33,129 @@ interface Article {
   imports: [CommonModule, RouterModule, FormsModule]
 })
 export class ArticleDetailsComponent implements OnInit {
-  article: Article | undefined;
+  article: Post | null = null;
   newComment: string = '';
+  isLoading = false;
+  hasError = false;
+  errorMessage = '';
+  isAddingComment = false;
 
-  // Données factices pour simuler une base de données
-  private articlesData: Article[] = [
-    {
-      id: 1,
-      title: "Titre de l'article 1",
-      date: "Date",
-      author: "Auteur",
-      content: "Content: lorem ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled...",
-      comments: [
-        {
-          username: "username",
-          content: "contenu du commentaire",
-          badges: [
-            { color: "#ff49db", initial: "W" },
-            { color: "#ff8c00", initial: "D" }
-          ]
-        },
-        {
-          username: "user2",
-          content: "Un autre commentaire intéressant sur cet article.",
-          badges: [
-            { color: "#1e90ff", initial: "B" }
-          ]
-        }
-      ]
-    },
-    {
-      id: 2,
-      title: "Titre de l'article 2",
-      date: "Date",
-      author: "Auteur",
-      content: "Content: lorem ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled...",
-      comments: []
-    },
-    {
-      id: 3,
-      title: "Titre de l'article 3",
-      date: "Date",
-      author: "Auteur",
-      content: "Content: lorem ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled...",
-      comments: []
-    },
-    {
-      id: 4,
-      title: "Titre de l'article 4",
-      date: "Date",
-      author: "Auteur",
-      content: "Content: lorem ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled...",
-      comments: []
-    }
-  ];
-
-  constructor(private route: ActivatedRoute) {}
+  constructor(
+    private route: ActivatedRoute,
+    private http: HttpClient,
+    private router: Router
+  ) {}
 
   ngOnInit() {
+    // Vérifier si l'utilisateur est connecté
+    const token = localStorage.getItem('token');
+    if (!token) {
+      console.error('Utilisateur non authentifié');
+      this.router.navigate(['/login']);
+      return;
+    }
+
     this.route.params.subscribe(params => {
       const articleId = +params['id']; // Convertit le paramètre string en number
-      this.article = this.articlesData.find(a => a.id === articleId);
+      this.loadArticle(articleId);
+    });
+  }
+
+  loadArticle(id: number): void {
+    this.isLoading = true;
+    this.hasError = false;
+
+    const token = localStorage.getItem('token');
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${token}`
+    });
+
+    this.http.get<Post>(`http://localhost:8080/api/posts/${id}`, { headers }).subscribe({
+      next: (data) => {
+        this.article = data;
+        this.isLoading = false;
+      },
+      error: (error) => {
+        console.error('Erreur lors du chargement de l\'article:', error);
+        this.isLoading = false;
+        this.hasError = true;
+        this.errorMessage = 'Impossible de charger l\'article.';
+
+        // Si erreur 401, rediriger vers login
+        if (error.status === 401) {
+          localStorage.removeItem('token');
+          this.router.navigate(['/login']);
+        }
+      }
     });
   }
 
   addComment() {
     if (!this.article || !this.newComment.trim()) return;
 
-    this.article.comments.push({
-      username: "Utilisateur", // Vous pourriez utiliser un service d'authentification ici
-      content: this.newComment,
-      badges: [{ color: "#4CAF50", initial: "U" }] // Badge par défaut
+    // Sauvegarder l'ID de l'article actuel
+    const currentArticleId = this.article.id;
+
+    // Sauvegarder temporairement le contenu du commentaire
+    const commentContent = this.newComment;
+
+    // Vider le champ de saisie immédiatement
+    this.newComment = '';
+
+    // Activer l'indicateur de chargement
+    this.isAddingComment = true;
+
+    const token = localStorage.getItem('token');
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
     });
 
-    this.newComment = ''; // Réinitialise le champ après l'ajout
+    this.http.post<Comment>(
+      `http://localhost:8080/api/posts/${currentArticleId}/comments`,
+      { content: commentContent },
+      { headers }
+    ).pipe(
+      finalize(() => {
+        // Que la requête réussisse ou échoue, recharger l'article complet
+        this.reloadArticleAfterComment(currentArticleId);
+      })
+    ).subscribe({
+      next: () => {
+        // Pas besoin de faire quoi que ce soit ici, le finalize s'en charge
+      },
+      error: (error) => {
+        console.error('Erreur lors de l\'ajout du commentaire:', error);
+
+        // Si erreur 401, rediriger vers login
+        if (error.status === 401) {
+          localStorage.removeItem('token');
+          this.router.navigate(['/login']);
+        }
+      }
+    });
+  }
+
+  // Nouvelle méthode pour recharger l'article après ajout d'un commentaire
+  private reloadArticleAfterComment(articleId: number): void {
+    const token = localStorage.getItem('token');
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${token}`
+    });
+
+    // Petit délai pour laisser le temps au backend de traiter le commentaire
+    setTimeout(() => {
+      this.http.get<Post>(`http://localhost:8080/api/posts/${articleId}`, { headers }).subscribe({
+        next: (data) => {
+          // Mettre à jour l'article entier (y compris les commentaires)
+          this.article = data;
+          this.isAddingComment = false;
+        },
+        error: (error) => {
+          console.error('Erreur lors du rechargement de l\'article:', error);
+          this.isAddingComment = false;
+        }
+      });
+    }, 300); // 300ms de délai
   }
 }

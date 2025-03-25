@@ -1,8 +1,56 @@
 <div class="min-h-screen bg-gray-50 p-8">
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+  <!-- Formulaire de création de thème -->
+  <div *ngIf="showCreateForm" class="mb-6 p-4 bg-white rounded-lg shadow">
+    <form [formGroup]="themeForm" (ngSubmit)="createTheme()">
+      <div class="mb-4">
+        <label for="name" class="block mb-2 font-medium">Nom du thème</label>
+        <input
+          type="text"
+          id="name"
+          formControlName="name"
+          class="w-full p-2 border rounded-lg"
+          placeholder="Ex: Java, Angular, etc.">
+        <div *ngIf="themeForm.get('name')?.invalid && themeForm.get('name')?.touched" class="text-red-500 mt-1">
+          Le nom du thème est requis
+        </div>
+      </div>
+
+      <div class="mb-4">
+        <label for="description" class="block mb-2 font-medium">Description (optionnelle)</label>
+        <textarea
+          id="description"
+          formControlName="description"
+          class="w-full p-2 border rounded-lg"
+          rows="3"
+          placeholder="Description du thème..."></textarea>
+      </div>
+
+      <button
+        type="submit"
+        [disabled]="themeForm.invalid"
+        class="bg-[#7763C5] text-white px-4 py-2 rounded-lg"
+        [ngClass]="{'opacity-50 cursor-not-allowed': themeForm.invalid}">
+        Créer le thème
+      </button>
+    </form>
+  </div>
+
+  <!-- Message de chargement -->
+  <div *ngIf="isLoading" class="text-center py-8">
+    <p>Chargement des thèmes...</p>
+  </div>
+
+  <!-- Message d'erreur -->
+  <div *ngIf="hasError" class="bg-red-100 text-red-700 p-4 rounded-lg mb-4">
+    Une erreur est survenue lors du chargement des thèmes.
+    <button (click)="loadThemes()" class="underline ml-2">Réessayer</button>
+  </div>
+
+  <!-- Liste des thèmes -->
+  <div *ngIf="!isLoading && !hasError" class="grid grid-cols-1 md:grid-cols-2 gap-4">
     <div *ngFor="let theme of themes" class="bg-gray-100 p-4 rounded-lg">
-      <h3 class="font-bold text-lg mb-2">{{theme.title}}</h3>
-      <p class="text-sm">{{theme.content}}</p>
+      <h3 class="font-bold text-lg mb-2">{{theme.name}}</h3>
+      <p class="text-sm mb-4">{{theme.description || 'Aucune description'}}</p>
       <div class="w-full flex items-center justify-center">
         <button
           (click)="toggleSubscription(theme)"
@@ -12,5 +60,10 @@
         </button>
       </div>
     </div>
+  </div>
+
+  <!-- Message si aucun thème -->
+  <div *ngIf="!isLoading && !hasError && themes.length === 0" class="text-center py-8">
+    <p>Aucun thème disponible. Créez-en un !</p>
   </div>
 </div>

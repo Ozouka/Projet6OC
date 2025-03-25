@@ -1,18 +1,29 @@
 <div class="min-h-screen bg-gray-50 p-8 flex flex-col lg:flex-row gap-4">
   <a routerLink="/articles" class="text-2xl font-semibold cursor-pointer">← </a>
-  <div class="lg:max-w-2xl lg:mx-auto">
+  <div class="lg:max-w-2xl lg:mx-auto w-full">
     <div class="flex items-center mb-8">
       <h1 class="text-2xl font-semibold">Créer un nouvel article</h1>
     </div>
 
-    <form (ngSubmit)="onSubmit()" class="space-y-4">
+    <!-- Message de chargement -->
+    <div *ngIf="isLoading" class="text-center py-8">
+      <p>Chargement des thèmes...</p>
+    </div>
+
+    <!-- Message d'erreur -->
+    <div *ngIf="errorMessage" class="bg-red-100 text-red-700 p-4 rounded-lg mb-4">
+      {{ errorMessage }}
+    </div>
+
+    <form [formGroup]="articleForm" (ngSubmit)="onSubmit()" class="space-y-4" *ngIf="!isLoading">
       <div>
-        <select class="w-full p-3 border rounded-lg bg-white" formControlName="theme">
+        <select class="w-full p-3 border rounded-lg bg-white" formControlName="themeId">
           <option value="" disabled selected>Sélectionner un thème</option>
-          <option value="1">Thème 1</option>
-          <option value="2">Thème 2</option>
-          <option value="3">Thème 3</option>
+          <option *ngFor="let theme of themes" [value]="theme.id">{{ theme.name }}</option>
         </select>
+        <div *ngIf="articleForm.get('themeId')?.invalid && articleForm.get('themeId')?.touched" class="text-red-500 mt-1">
+          Veuillez sélectionner un thème
+        </div>
       </div>
 
       <div>
@@ -20,17 +31,25 @@
                class="w-full p-3 border rounded-lg"
                placeholder="Titre de l'article"
                formControlName="title">
+        <div *ngIf="articleForm.get('title')?.invalid && articleForm.get('title')?.touched" class="text-red-500 mt-1">
+          Le titre est requis
+        </div>
       </div>
 
       <div>
         <textarea class="w-full p-3 border rounded-lg h-48"
                   placeholder="Contenu de l'article"
                   formControlName="content"></textarea>
+        <div *ngIf="articleForm.get('content')?.invalid && articleForm.get('content')?.touched" class="text-red-500 mt-1">
+          Le contenu doit faire au moins 10 caractères
+        </div>
       </div>
 
       <button type="submit"
+              [disabled]="articleForm.invalid || isSubmitting"
+              [ngClass]="{'opacity-50 cursor-not-allowed': articleForm.invalid || isSubmitting}"
               class="w-full bg-[#7763C5] text-white px-4 py-2 rounded-lg">
-        Créer
+        {{ isSubmitting ? 'Création en cours...' : 'Créer' }}
       </button>
     </form>
   </div>

@@ -34,14 +34,25 @@
     <!-- Section Abonnements -->
     <div class="w-full border-t-2 border-solid border-black">
       <h2 class="text-2xl font-bold mb-6 text-center">Abonnements</h2>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+      <!-- Indicateur de chargement -->
+      <div *ngIf="isLoading" class="flex justify-center items-center h-24">
+        <div class="animate-spin rounded-full h-12 w-12 border-t-4 border-indigo-500"></div>
+      </div>
+
+      <!-- Message d'erreur -->
+      <div *ngIf="hasError && !isLoading" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+        <strong class="font-bold">Erreur !</strong>
+        <span class="block sm:inline">{{ errorMessage }}</span>
+        <button (click)="loadThemes()" class="mt-2 bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded">
+          Réessayer
+        </button>
+      </div>
+
+      <div *ngIf="!isLoading" class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div *ngFor="let theme of subscribedThemes" class="bg-gray-100 p-4 rounded-lg">
-          <h3 class="font-bold text-lg mb-2">{{theme.title}}</h3>
-          <div class="flex justify-between text-sm text-gray-600 mb-2">
-            <span>{{theme.date}}</span>
-            <span>{{theme.author}}</span>
-          </div>
-          <p class="text-sm mb-4">{{theme.content}}</p>
+          <h3 class="font-bold text-lg mb-2">{{theme.name}}</h3>
+          <p *ngIf="theme.description" class="text-sm mb-4">{{theme.description}}</p>
           <div class="w-full flex items-center justify-center">
             <button
               (click)="toggleSubscription(theme)"

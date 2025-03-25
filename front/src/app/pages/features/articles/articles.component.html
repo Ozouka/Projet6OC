@@ -18,8 +18,8 @@
     <button *ngFor="let article of articles" class="bg-gray-100 p-4 rounded-lg" [routerLink]="['/articles', article.id]">
       <h3 class="!font-bold text-lg mb-2 text-start">{{article.title}}</h3>
       <div class="flex justify-between text-sm text-gray-600 mb-2 max-w-[17.125rem]">
-        <span>{{article.date }}</span>
-        <span>{{article.author}}</span>
+        <span>{{article.createdAt}}</span>
+        <span>{{article.authorEmail}}</span>
       </div>
       <p class="text-sm text-start">{{article.content}}</p>
     </button>

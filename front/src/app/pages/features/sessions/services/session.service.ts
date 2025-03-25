@@ -15,11 +15,12 @@ export class SessionService {
     this.isLogged = this.getLoggedStatusFromStorage();
   }
 
-  public logIn(sessionInformation: SessionInformation): void {
-    this.sessionInformation = sessionInformation;
+  public logIn(response: any): void {
+    localStorage.setItem('token', response.token);
+    this.sessionInformation = response.sessionInformation;
     this.isLogged = true;
     localStorage.setItem('isLogged', 'true');
-    localStorage.setItem('sessionInformation', JSON.stringify(sessionInformation));
+    localStorage.setItem('sessionInformation', JSON.stringify(response.sessionInformation));
     this.isLoggedSubject.next(true);
   }
 
