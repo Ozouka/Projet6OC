@@ -47,7 +47,6 @@ export class ArticleDetailsComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    // Vérifier si l'utilisateur est connecté
     const token = localStorage.getItem('token');
     if (!token) {
       console.error('Utilisateur non authentifié');
@@ -56,7 +55,7 @@ export class ArticleDetailsComponent implements OnInit {
     }
 
     this.route.params.subscribe(params => {
-      const articleId = +params['id']; // Convertit le paramètre string en number
+      const articleId = +params['id'];
       this.loadArticle(articleId);
     });
   }
@@ -81,7 +80,6 @@ export class ArticleDetailsComponent implements OnInit {
         this.hasError = true;
         this.errorMessage = 'Impossible de charger l\'article.';
 
-        // Si erreur 401, rediriger vers login
         if (error.status === 401) {
           localStorage.removeItem('token');
           this.router.navigate(['/login']);
@@ -93,16 +91,12 @@ export class ArticleDetailsComponent implements OnInit {
   addComment() {
     if (!this.article || !this.newComment.trim()) return;
 
-    // Sauvegarder l'ID de l'article actuel
     const currentArticleId = this.article.id;
 
-    // Sauvegarder temporairement le contenu du commentaire
     const commentContent = this.newComment;
 
-    // Vider le champ de saisie immédiatement
     this.newComment = '';
 
-    // Activer l'indicateur de chargement
     this.isAddingComment = true;
 
     const token = localStorage.getItem('token');
@@ -117,17 +111,14 @@ export class ArticleDetailsComponent implements OnInit {
       { headers }
     ).pipe(
       finalize(() => {
-        // Que la requête réussisse ou échoue, recharger l'article complet
         this.reloadArticleAfterComment(currentArticleId);
       })
     ).subscribe({
       next: () => {
-        // Pas besoin de faire quoi que ce soit ici, le finalize s'en charge
       },
       error: (error) => {
         console.error('Erreur lors de l\'ajout du commentaire:', error);
 
-        // Si erreur 401, rediriger vers login
         if (error.status === 401) {
           localStorage.removeItem('token');
           this.router.navigate(['/login']);
@@ -136,18 +127,15 @@ export class ArticleDetailsComponent implements OnInit {
     });
   }
 
-  // Nouvelle méthode pour recharger l'article après ajout d'un commentaire
   private reloadArticleAfterComment(articleId: number): void {
     const token = localStorage.getItem('token');
     const headers = new HttpHeaders({
       'Authorization': `Bearer ${token}`
     });
 
-    // Petit délai pour laisser le temps au backend de traiter le commentaire
     setTimeout(() => {
       this.http.get<Post>(`http://localhost:8080/api/posts/${articleId}`, { headers }).subscribe({
         next: (data) => {
-          // Mettre à jour l'article entier (y compris les commentaires)
           this.article = data;
           this.isAddingComment = false;
         },
@@ -156,6 +144,6 @@ export class ArticleDetailsComponent implements OnInit {
           this.isAddingComment = false;
         }
       });
-    }, 300); // 300ms de délai
+    }, 300);
   }
 }

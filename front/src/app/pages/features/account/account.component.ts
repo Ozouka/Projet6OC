@@ -3,13 +3,8 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-
-interface Theme {
-  id: number;
-  name: string;
-  description: string | null;
-  isSubscribed: boolean; // Pour gérer l'état d'abonnement côté UI
-}
+import { ThemeService } from '../themes/services/theme.service';
+import { Theme } from '../themes/interfaces/theme.interface';
 
 @Component({
   selector: 'app-account',
@@ -29,12 +24,12 @@ export class AccountComponent implements OnInit {
 
   constructor(
     private fb: FormBuilder,
-    private http: HttpClient
+    private http: HttpClient,
+    private themeService: ThemeService
   ) {
     this.profileForm = this.fb.group({
       username: ['', Validators.required],
       email: ['', [Validators.required, Validators.email]],
-      password: ['', Validators.required]
     });
   }
 
@@ -54,16 +49,14 @@ export class AccountComponent implements OnInit {
       'Authorization': `Bearer ${token}`
     });
 
-    // Appel à l'endpoint /me pour récupérer les informations de l'utilisateur
     this.http.get<any>('http://localhost:8080/auth/me', { headers }).subscribe({
       next: (userData) => {
         console.log('Données utilisateur reçues:', userData);
 
-        // Mise à jour du formulaire avec les données utilisateur
         this.profileForm.patchValue({
           username: userData.username,
           email: userData.email,
-          password: '' // On ne récupère jamais le mot de passe
+          password: ''
         });
       },
       error: (error) => {
@@ -78,28 +71,11 @@ export class AccountComponent implements OnInit {
     this.isLoading = true;
     this.hasError = false;
 
-    const token = localStorage.getItem('token');
-    if (!token) {
-      console.error('Utilisateur non authentifié');
-      this.isLoading = false;
-      return;
-    }
-
-    const headers = new HttpHeaders({
-      'Authorization': `Bearer ${token}`
-    });
-
-    // Récupérer tous les thèmes
-    this.http.get<Theme[]>('http://localhost:8080/api/themes', { headers }).subscribe({
+    this.themeService.getThemes().subscribe({
       next: (themes) => {
-        // Marquer les thèmes auxquels l'utilisateur est abonné
-        this.subscribedThemes = themes.map(theme => ({
-          ...theme,
-          isSubscribed: false // Par défaut, on considère que l'utilisateur n'est pas abonné
-        }));
-
-        // Ensuite, récupérer les abonnements de l'utilisateur
-        this.loadUserSubscriptions();
+        this.subscribedThemes = themes.filter(theme =>
+          theme.isSubscribed || theme.subscribed
+        );
         this.isLoading = false;
       },
       error: (error) => {
@@ -107,28 +83,6 @@ export class AccountComponent implements OnInit {
         this.isLoading = false;
         this.hasError = true;
         this.errorMessage = 'Impossible de charger les thèmes.';
-      }
-    });
-  }
-
-  loadUserSubscriptions() {
-    const token = localStorage.getItem('token');
-    if (!token) return;
-
-    const headers = new HttpHeaders({
-      'Authorization': `Bearer ${token}`
-    });
-
-    // Supposons qu'il existe un endpoint pour récupérer les abonnements de l'utilisateur
-    this.http.get<number[]>('http://localhost:8080/api/themes/subscribed', { headers }).subscribe({
-      next: (subscribedThemeIds) => {
-        // Marquer les thèmes auxquels l'utilisateur est abonné
-        this.subscribedThemes.forEach(theme => {
-          theme.isSubscribed = subscribedThemeIds.includes(theme.id);
-        });
-      },
-      error: (error) => {
-        console.error('Erreur lors du chargement des abonnements:', error);
       }
     });
   }
@@ -149,24 +103,20 @@ export class AccountComponent implements OnInit {
         'Content-Type': 'application/json'
       });
 
-      // Définir le type pour éviter l'erreur TypeScript
       const updateUser: any = {
         username: this.profileForm.value.username,
         email: this.profileForm.value.email
       };
 
-      // Ajouter le mot de passe uniquement s'il a été saisi
       if (this.profileForm.value.password && this.profileForm.value.password.trim() !== '') {
         updateUser.password = this.profileForm.value.password;
       }
 
-      // Appel à l'API pour mettre à jour le profil
       this.http.put('http://localhost:8080/auth/me', updateUser, { headers }).subscribe({
         next: (response) => {
           this.updateSuccess = true;
           console.log('Profil mis à jour avec succès');
 
-          // Réinitialiser le champ mot de passe
           this.profileForm.patchValue({ password: '' });
         },
         error: (error) => {
@@ -180,38 +130,43 @@ export class AccountComponent implements OnInit {
   }
 
   toggleSubscription(theme: Theme): void {
-    const token = localStorage.getItem('token');
-    if (!token) return;
+    if (!theme.id) {
+      console.error('L\'ID du thème est manquant');
+      return;
+    }
 
-    const headers = new HttpHeaders({
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    });
+    const isSubscribed = theme.isSubscribed || theme.subscribed;
 
-    const url = `http://localhost:8080/api/themes/${theme.id}/subscribe`;
-
-    if (theme.isSubscribed) {
-      // Désabonnement
-      this.http.delete(url, { headers }).subscribe({
-        next: () => {
-          theme.isSubscribed = false;
-          console.log(`Désabonnement du thème ${theme.name} réussi`);
+    if (isSubscribed) {
+      this.themeService.unsubscribeFromTheme(theme.id).subscribe({
+        next: (updatedTheme) => {
+          console.log('Désabonnement réussi:', updatedTheme);
+          this.loadThemes();
         },
         error: (error) => {
-          console.error(`Erreur lors du désabonnement du thème ${theme.name}:`, error);
+          console.error('Erreur lors du désabonnement:', error);
+          if (error.status === 409 || error.status === 404) {
+            this.loadThemes();
+          }
         }
       });
     } else {
-      // Abonnement
-      this.http.post(url, {}, { headers }).subscribe({
-        next: () => {
-          theme.isSubscribed = true;
-          console.log(`Abonnement au thème ${theme.name} réussi`);
+      this.themeService.subscribeToTheme(theme.id).subscribe({
+        next: (updatedTheme) => {
+          console.log('Abonnement réussi:', updatedTheme);
+          this.loadThemes();
         },
         error: (error) => {
-          console.error(`Erreur lors de l'abonnement au thème ${theme.name}:`, error);
+          console.error('Erreur lors de l\'abonnement:', error);
+          if (error.status === 409 || error.status === 404) {
+            this.loadThemes();
+          }
         }
       });
     }
+  }
+
+  isThemeSubscribed(theme: Theme): boolean {
+    return theme.isSubscribed === true || theme.subscribed === true;
   }
 }

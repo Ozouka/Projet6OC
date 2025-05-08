@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, Validators, ReactiveFormsModule, AbstractControl, ValidationErrors } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { RegisterRequest } from '../../interfaces/registerRequest.interface';
@@ -35,8 +35,8 @@ export class RegisterComponent implements OnInit {
       '',
       [
         Validators.required,
-        Validators.min(3),
-        Validators.max(40)
+        Validators.max(40),
+        passwordValidator
       ]
     ],
     firstName: ['testFirstName', [Validators.required]],
@@ -76,4 +76,16 @@ export class RegisterComponent implements OnInit {
     });
   }
 
+}
+
+function passwordValidator(control: AbstractControl): ValidationErrors | null {
+  const value = control.value;
+  if (!value) return null;
+  const hasMinLength = value.length >= 8;
+  const hasUpperCase = /[A-Z]/.test(value);
+  const hasLowerCase = /[a-z]/.test(value);
+  const hasNumber = /[0-9]/.test(value);
+  const hasSpecialChar = /[^A-Za-z0-9]/.test(value);
+  const valid = hasMinLength && hasUpperCase && hasLowerCase && hasNumber && hasSpecialChar;
+  return valid ? null : { passwordInvalid: true };
 }

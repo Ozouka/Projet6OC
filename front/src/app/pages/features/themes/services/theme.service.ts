@@ -1,19 +1,7 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-
-export interface Theme {
-  id?: number;
-  name: string;
-  description: string | null;
-  userEmail?: string;
-  isSubscribed?: boolean;
-}
-
-export interface ThemeRequest {
-  name: string;
-  description: string | null;
-}
+import { Theme, ThemeRequest } from '../interfaces/theme.interface';
 
 @Injectable({
   providedIn: 'root'
@@ -44,14 +32,14 @@ export class ThemeService {
     });
   }
 
-  public subscribeToTheme(themeId: number): Observable<void> {
-    return this.httpClient.post<void>(`${this.pathService}/themes/${themeId}/subscribe`, {}, {
+  public subscribeToTheme(themeId: number): Observable<Theme> {
+    return this.httpClient.post<Theme>(`${this.pathService}/themes/${themeId}/subscribe`, {}, {
       headers: this.getHeaders()
     });
   }
 
-  public unsubscribeFromTheme(themeId: number): Observable<void> {
-    return this.httpClient.delete<void>(`${this.pathService}/themes/${themeId}/subscribe`, {
+  public unsubscribeFromTheme(themeId: number): Observable<Theme> {
+    return this.httpClient.delete<Theme>(`${this.pathService}/themes/${themeId}/subscribe`, {
       headers: this.getHeaders()
     });
   }

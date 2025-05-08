@@ -4,6 +4,7 @@ export interface Theme {
   description: string | null;
   userEmail?: string;
   isSubscribed?: boolean;
+  subscribed?: boolean;  // Alias pour isSubscribed utilisé par le backend
 }
 
 export interface ThemeRequest {

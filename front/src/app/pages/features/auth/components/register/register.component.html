@@ -34,6 +34,9 @@
                placeholder="Mot de passe"
                formControlName="password">
       </div>
+      <div *ngIf="form.get('password')?.touched && form.get('password')?.errors?.['passwordInvalid']" class="text-red-500 text-xs mt-1">
+        Le mot de passe doit contenir au moins 8 caractères, une majuscule, une minuscule, un chiffre et un caractère spécial.
+      </div>
       <input class="hidden" type="text" value="testFirstName" formControlName="firstName">
       <input class="hidden" type="text" value="testLastName" formControlName="lastName">
     </div>

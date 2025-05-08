@@ -3,7 +3,8 @@ import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { ArticleService, PostRequest } from '../services/article.service';
-import { ThemeService, Theme } from '../../themes/services/theme.service';
+import { ThemeService } from '../../themes/services/theme.service';
+import { Theme } from '../../themes/interfaces/theme.interface';
 
 @Component({
   selector: 'app-create-article',
@@ -32,7 +33,6 @@ export class CreateArticleComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    // Vérifier si l'utilisateur est connecté
     const token = localStorage.getItem('token');
     if (!token) {
       console.error('Utilisateur non authentifié');
@@ -56,7 +56,6 @@ export class CreateArticleComponent implements OnInit {
         this.isLoading = false;
         this.errorMessage = 'Impossible de charger les thèmes. Veuillez réessayer.';
 
-        // Si erreur 401, rediriger vers login
         if (error.status === 401) {
           localStorage.removeItem('token');
           this.router.navigate(['/login']);
@@ -72,7 +71,7 @@ export class CreateArticleComponent implements OnInit {
       const postRequest: PostRequest = {
         title: this.articleForm.value.title,
         content: this.articleForm.value.content,
-        themeId: Number(this.articleForm.value.themeId) // Convertir en nombre
+        themeId: Number(this.articleForm.value.themeId)
       };
 
       this.articleService.createPost(postRequest).subscribe({
@@ -85,7 +84,6 @@ export class CreateArticleComponent implements OnInit {
           console.error('Erreur lors de la création de l\'article:', error);
           this.errorMessage = 'Erreur lors de la création de l\'article. Veuillez réessayer.';
 
-          // Si erreur 401, rediriger vers login
           if (error.status === 401) {
             localStorage.removeItem('token');
             this.router.navigate(['/login']);

@@ -1,5 +1,4 @@
 <div class="min-h-screen bg-gray-50 p-8">
-  <!-- Formulaire de création de thème -->
   <div *ngIf="showCreateForm" class="mb-6 p-4 bg-white rounded-lg shadow">
     <form [formGroup]="themeForm" (ngSubmit)="createTheme()">
       <div class="mb-4">
@@ -35,18 +34,15 @@
     </form>
   </div>
 
-  <!-- Message de chargement -->
   <div *ngIf="isLoading" class="text-center py-8">
     <p>Chargement des thèmes...</p>
   </div>
 
-  <!-- Message d'erreur -->
   <div *ngIf="hasError" class="bg-red-100 text-red-700 p-4 rounded-lg mb-4">
     Une erreur est survenue lors du chargement des thèmes.
     <button (click)="loadThemes()" class="underline ml-2">Réessayer</button>
   </div>
 
-  <!-- Liste des thèmes -->
   <div *ngIf="!isLoading && !hasError" class="grid grid-cols-1 md:grid-cols-2 gap-4">
     <div *ngFor="let theme of themes" class="bg-gray-100 p-4 rounded-lg">
       <h3 class="font-bold text-lg mb-2">{{theme.name}}</h3>
@@ -54,15 +50,14 @@
       <div class="w-full flex items-center justify-center">
         <button
           (click)="toggleSubscription(theme)"
-          [ngClass]="{'bg-[#7763C5]': !theme.isSubscribed, 'bg-[#939393]': theme.isSubscribed}"
+          [ngClass]="{'bg-[#7763C5]': !isThemeSubscribed(theme), 'bg-[#939393]': isThemeSubscribed(theme)}"
           class="text-white px-10 py-2 rounded-lg">
-          {{ theme.isSubscribed ? 'Déjà abonné' : 'S\'abonner' }}
+          {{ isThemeSubscribed(theme) ? 'Déjà abonné' : 'S\'abonner' }}
         </button>
       </div>
     </div>
   </div>
 
-  <!-- Message si aucun thème -->
   <div *ngIf="!isLoading && !hasError && themes.length === 0" class="text-center py-8">
     <p>Aucun thème disponible. Créez-en un !</p>
   </div>

@@ -1,25 +1,61 @@
 <div class="min-h-screen bg-gray-50 p-8">
-
-
   <div class="flex flex-col lg:flex-row gap-4 justify-between items-center mb-8">
     <button class="bg-[#7763C5] text-white px-4 py-2 rounded-lg" [routerLink]="['/articles/create']">
       Créer un article
     </button>
-    <div class="flex items-center gap-2">
-      <span class="font-bold">Trier par</span>
-      <svg width="8" height="17" viewBox="0 0 8 17" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M3.64645 16.3536C3.84171 16.5488 4.15829 16.5488 4.35355 16.3536L7.53553 13.1716C7.7308 12.9763 7.7308 12.6597 7.53553 12.4645C7.34027 12.2692 7.02369 12.2692 6.82843 12.4645L4 15.2929L1.17157 12.4645C0.976311 12.2692 0.659728 12.2692 0.464466 12.4645C0.269204 12.6597 0.269204 12.9763 0.464466 13.1716L3.64645 16.3536ZM3.5 0L3.5 16H4.5L4.5 0L3.5 0Z" fill="black"/>
+    <div class="relative">
+      <div class="flex items-center gap-2 cursor-pointer" (click)="toggleDropdown()">
+        <span class="font-bold">Trier par</span>
+        <svg [class.transform]="isDropdownOpen" [class.rotate-180]="isDropdownOpen" width="8" height="17" viewBox="0 0 8 17" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M3.64645 16.3536C3.84171 16.5488 4.15829 16.5488 4.35355 16.3536L7.53553 13.1716C7.7308 12.9763 7.7308 12.6597 7.53553 12.4645C7.34027 12.2692 7.02369 12.2692 6.82843 12.4645L4 15.2929L1.17157 12.4645C0.976311 12.2692 0.659728 12.2692 0.464466 12.4645C0.269204 12.6597 0.269204 12.9763 0.464466 13.1716L3.64645 16.3536ZM3.5 0L3.5 16H4.5L4.5 0L3.5 0Z" fill="black"/>
         </svg>
-
+      </div>
+      <div *ngIf="isDropdownOpen" class="absolute right-0 mt-2 w-40 bg-white shadow-lg rounded-md z-10">
+        <div class="py-1">
+          <button
+            class="w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+            [class.font-semibold]="sortOrder === 'desc'"
+            (click)="setSortOrder('desc')">
+            Plus récent
+          </button>
+          <button
+            class="w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+            [class.font-semibold]="sortOrder === 'asc'"
+            (click)="setSortOrder('asc')">
+            Plus ancien
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+  <div *ngIf="isLoading" class="text-center py-8">
+    <p>Chargement des articles...</p>
+  </div>
+
+  <div *ngIf="hasError" class="bg-red-100 text-red-700 p-4 rounded-lg mb-4">
+    {{ errorMessage }}
+    <button (click)="loadArticlesAndThemes()" class="underline ml-2">Réessayer</button>
+  </div>
+
+  <div *ngIf="articles.length === 0 && !isLoading && !hasError" class="text-center py-8">
+    <p>
+      Aucun article disponible pour les thèmes auxquels vous êtes abonné.
+      <a [routerLink]="['/themes']" class="text-[#7763C5] underline">
+        S'abonner à des thèmes
+      </a>
+    </p>
+  </div>
+
+  <div *ngIf="articles.length > 0 && !isLoading && !hasError" class="grid grid-cols-1 md:grid-cols-2 gap-4">
     <button *ngFor="let article of articles" class="bg-gray-100 p-4 rounded-lg" [routerLink]="['/articles', article.id]">
       <h3 class="!font-bold text-lg mb-2 text-start">{{article.title}}</h3>
       <div class="flex justify-between text-sm text-gray-600 mb-2 max-w-[17.125rem]">
-        <span>{{article.createdAt}}</span>
+        <span>{{article.createdAt | date:'dd/MM/yyyy'}}</span>
         <span>{{article.authorEmail}}</span>
+        <div class="text-xs text-gray-500 mb-2">
+          Thème: {{article.themeName}}
+        </div>
       </div>
       <p class="text-sm text-start">{{article.content}}</p>
     </button>

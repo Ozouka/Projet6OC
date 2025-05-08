@@ -2,7 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ThemeService, Theme, ThemeRequest } from './services/theme.service';
+import { ThemeService } from './services/theme.service';
+import { Theme, ThemeRequest } from './interfaces/theme.interface';
 import { Router } from '@angular/router';
 
 @Component({
@@ -30,7 +31,6 @@ export class ThemesComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    // Vérifier si l'utilisateur est connecté
     const token = localStorage.getItem('token');
     if (!token) {
       console.error('Utilisateur non authentifié');
@@ -41,13 +41,21 @@ export class ThemesComponent implements OnInit {
     this.loadThemes();
   }
 
+  isThemeSubscribed(theme: Theme): boolean {
+    return theme.isSubscribed === true || theme.subscribed === true;
+  }
+
   loadThemes(): void {
     this.isLoading = true;
     this.hasError = false;
 
     this.themeService.getThemes().subscribe({
       next: (data: Theme[]) => {
-        this.themes = data;
+        console.log('Thèmes chargés:', data);
+        this.themes = data.map(theme => {
+          theme.isSubscribed = theme.isSubscribed || theme.subscribed;
+          return theme;
+        });
         this.isLoading = false;
       },
       error: (error: any) => {
@@ -55,7 +63,6 @@ export class ThemesComponent implements OnInit {
         this.isLoading = false;
         this.hasError = true;
 
-        // Si erreur 401, rediriger vers login
         if (error.status === 401) {
           localStorage.removeItem('token');
           this.router.navigate(['/login']);
@@ -70,22 +77,51 @@ export class ThemesComponent implements OnInit {
       return;
     }
 
-    if (theme.isSubscribed) {
+    console.log('État avant abonnement/désabonnement:', theme);
+    const isSubscribed = this.isThemeSubscribed(theme);
+
+    if (isSubscribed) {
       this.themeService.unsubscribeFromTheme(theme.id).subscribe({
-        next: () => {
-          theme.isSubscribed = false;
+        next: (updatedTheme: Theme) => {
+          console.log('Réponse désabonnement:', updatedTheme);
+          const index = this.themes.findIndex(t => t.id === theme.id);
+          if (index !== -1) {
+            updatedTheme.isSubscribed = updatedTheme.isSubscribed || updatedTheme.subscribed;
+            console.log('Mise à jour du thème:', updatedTheme);
+            this.themes[index] = {...updatedTheme};
+          }
         },
         error: (error: any) => {
           console.error('Erreur lors du désabonnement:', error);
+          if (error.status === 401) {
+            localStorage.removeItem('token');
+            this.router.navigate(['/login']);
+          }
+          if (error.status === 409 || error.status === 404) {
+            this.loadThemes();
+          }
         }
       });
     } else {
       this.themeService.subscribeToTheme(theme.id).subscribe({
-        next: () => {
-          theme.isSubscribed = true;
+        next: (updatedTheme: Theme) => {
+          console.log('Réponse abonnement:', updatedTheme);
+          const index = this.themes.findIndex(t => t.id === theme.id);
+          if (index !== -1) {
+            updatedTheme.isSubscribed = updatedTheme.isSubscribed || updatedTheme.subscribed;
+            console.log('Mise à jour du thème:', updatedTheme);
+            this.themes[index] = {...updatedTheme};
+          }
         },
         error: (error: any) => {
           console.error('Erreur lors de l\'abonnement:', error);
+          if (error.status === 401) {
+            localStorage.removeItem('token');
+            this.router.navigate(['/login']);
+          }
+          if (error.status === 409 || error.status === 404) {
+            this.loadThemes();
+          }
         }
       });
     }
@@ -110,12 +146,16 @@ export class ThemesComponent implements OnInit {
 
     this.themeService.createTheme(themeRequest).subscribe({
       next: (newTheme: Theme) => {
-        // Ajouter le nouveau thème à la liste
-        this.themes.unshift({...newTheme, isSubscribed: false});
-        this.toggleCreateForm(); // Fermer le formulaire
+        newTheme.isSubscribed = newTheme.isSubscribed || newTheme.subscribed;
+        this.themes.unshift({...newTheme});
+        this.toggleCreateForm();
       },
       error: (error: any) => {
         console.error('Erreur lors de la création du thème:', error);
+        if (error.status === 401) {
+          localStorage.removeItem('token');
+          this.router.navigate(['/login']);
+        }
       }
     });
   }
