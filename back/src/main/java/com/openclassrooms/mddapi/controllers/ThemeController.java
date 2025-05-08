@@ -4,6 +4,7 @@ import com.openclassrooms.mddapi.payload.request.ThemeRequest;
 import com.openclassrooms.mddapi.payload.response.ThemeResponse;
 import com.openclassrooms.mddapi.services.ThemeService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -13,6 +14,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/themes")
 @RequiredArgsConstructor
+@Slf4j
 public class ThemeController {
     private final ThemeService themeService;
 
@@ -30,23 +32,33 @@ public class ThemeController {
 
     @GetMapping
     public ResponseEntity<List<ThemeResponse>> getAllThemes() {
-        return ResponseEntity.ok(themeService.getAllThemes());
+        List<ThemeResponse> themes = themeService.getAllThemes();
+        log.info("Renvoi de {} thèmes", themes.size());
+        return ResponseEntity.ok(themes);
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<ThemeResponse> getThemeById(@PathVariable Long id) {
-        return ResponseEntity.ok(themeService.getThemeById(id));
+        ThemeResponse theme = themeService.getThemeById(id);
+        log.info("Renvoi du thème: {}, abonné: {}", theme.getName(), theme.isSubscribed());
+        return ResponseEntity.ok(theme);
     }
 
     @PostMapping("/{themeId}/subscribe")
-    public ResponseEntity<?> subscribeToTheme(@PathVariable Long themeId) {
+    public ResponseEntity<ThemeResponse> subscribeToTheme(@PathVariable Long themeId) {
+        log.info("Demande d'abonnement au thème d'ID: {}", themeId);
         themeService.subscribeToTheme(themeId);
-        return ResponseEntity.ok().build();
+        ThemeResponse updatedTheme = themeService.getThemeById(themeId);
+        log.info("Abonnement terminé, état d'abonnement: {}", updatedTheme.isSubscribed());
+        return ResponseEntity.ok(updatedTheme);
     }
 
     @DeleteMapping("/{themeId}/subscribe")
-    public ResponseEntity<?> unsubscribeFromTheme(@PathVariable Long themeId) {
+    public ResponseEntity<ThemeResponse> unsubscribeFromTheme(@PathVariable Long themeId) {
+        log.info("Demande de désabonnement du thème d'ID: {}", themeId);
         themeService.unsubscribeFromTheme(themeId);
-        return ResponseEntity.ok().build();
+        ThemeResponse updatedTheme = themeService.getThemeById(themeId);
+        log.info("Désabonnement terminé, état d'abonnement: {}", updatedTheme.isSubscribed());
+        return ResponseEntity.ok(updatedTheme);
     }
 }
